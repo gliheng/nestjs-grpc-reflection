@@ -1,12 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
 import { AppService } from './app.service';
 
-@Controller()
+@Controller('sample')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @GrpcMethod('SampleService', 'hello')
+  hello(): { world: string } {
+    return { world: this.appService.getHello() };
   }
 }
