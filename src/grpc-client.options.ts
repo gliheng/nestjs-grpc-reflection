@@ -10,7 +10,6 @@ export const grpcClientOptions: GrpcOptions = {
       join(__dirname, 'grpc-reflection/proto/grpc/reflection/v1alpha/reflection.proto')
     ],
     loader: {
-      keepCase: true,
       oneofs: true
     }
   },

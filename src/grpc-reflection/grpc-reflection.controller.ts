@@ -1,11 +1,23 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { Observable, Subject } from 'rxjs';
+
+import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { Controller, Inject, OnModuleInit } from '@nestjs/common';
 import { GrpcOptions } from '@nestjs/microservices';
-import { Observable, Subject } from 'rxjs';
 
 import { protobufPackage, ServerReflectionController, ServerReflectionControllerMethods, ServerReflectionRequest, ServerReflectionResponse } from './proto/grpc/reflection/v1alpha/reflection';
 
 export const GRPC_CONFIG_PROVIDER_TOKEN = 'GRPC_CONFIG_OPTIONS';
+
+interface ProtoFileData {
+  path: string;
+  name: string;
+  services: string[];
+}
+
+type ProtoIndex = Record<string, ProtoFileData>;
 
 /** Implements the gRPC Reflection API spec
  *
@@ -15,7 +27,7 @@ export const GRPC_CONFIG_PROVIDER_TOKEN = 'GRPC_CONFIG_OPTIONS';
 @ServerReflectionControllerMethods()
 export class GrpcReflectionController implements OnModuleInit, ServerReflectionController {
 
-  private index: Record<string, string[]> = {};
+  private index: ProtoIndex = {};
 
   constructor(@Inject(GRPC_CONFIG_PROVIDER_TOKEN) private readonly grpcConfig: GrpcOptions) {}
 
@@ -40,7 +52,11 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
         return objName;
       }).filter(str => !!str);
 
-      return [file, services];
+      return [path.basename(file), {
+        path: file,
+        name: path.basename(file),
+        services
+      }];
     })));
 
     console.log(this.index);
@@ -51,7 +67,34 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
 
     const onComplete = () => response$.complete();
     const onNext = (message: ServerReflectionRequest): void => {
-
+      if (message.fileByFilename) {
+        const protoFile = Object.values(this.index).find(({ name }) => name === message.fileByFilename);
+        if (protoFile) {
+          response$.next({
+            validHost: message.host,
+            originalRequest: message,
+            fileDescriptorResponse: {
+              fileDescriptorProto: [fs.readFileSync(protoFile.path)]
+            },
+            allExtensionNumbersResponse: undefined,
+            listServicesResponse: undefined,
+            errorResponse: undefined
+          });
+        }
+        else {
+          response$.next({
+            validHost: message.host,
+            originalRequest: message,
+            fileDescriptorResponse: undefined,
+            allExtensionNumbersResponse: undefined,
+            listServicesResponse: undefined,
+            errorResponse: {
+              errorCode: grpc.status.NOT_FOUND,
+              errorMessage: `Proto file not found: ${message.fileByFilename}`
+            }
+          });
+        }
+      }
     };
 
     request$.subscribe({
