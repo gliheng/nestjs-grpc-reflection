@@ -6,7 +6,7 @@ import { objectToCamel, objectToSnake } from 'ts-case-convert';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { Controller, Inject, OnModuleInit } from '@nestjs/common';
-import { GrpcMethod, GrpcOptions } from '@nestjs/microservices';
+import { GrpcOptions } from '@nestjs/microservices';
 
 import { REFLECTION_PROTO } from './grpc-reflection.constants';
 import { protobufPackage, ServerReflectionController, ServerReflectionControllerMethods, ServerReflectionRequest, ServerReflectionResponse } from './proto/grpc/reflection/v1alpha/reflection';
@@ -37,18 +37,18 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
     const { protoPath, loader } = this.grpcConfig.options;
     const protoFiles = Array.isArray(protoPath) ? protoPath : [protoPath];
 
-    this.index = Object.fromEntries(protoFiles.map((file => {
+    this.index = Object.fromEntries(protoFiles.filter(f => f != REFLECTION_PROTO).map((file => {
       const packageDefinition = protoLoader.loadSync(file, loader);
 
       const services = Object.entries(packageDefinition).map(([objName, obj]) => {
         // Message Types
         if (obj.format === 'Protocol Buffer 3 DescriptorProto') {
-          return null;
+          return null; // obj.type.name
         }
 
         // Enum Types
         if (obj.format === 'Protocol Buffer 3 EnumDescriptorProto') {
-          return null
+          return null;
         }
 
         return objName;
@@ -74,6 +74,21 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
        * necessary because this module will be loaded into someone else's gRPC environment which we don't have control
        * over. If they've set keepCase to 'true' then we should convert it anyways for ourselves for consistency. */
       const message = this.grpcConfig.options.loader.keepCase ? objectToCamel(rawMsg) : rawMsg;
+
+      if (message.listServices) {
+        const services = Object.values(this.index).map(({ services }) => services).flat();
+        const response = {
+          validHost: message.host,
+          originalRequest: message,
+          listServicesResponse: {
+            service: services.map(name => ({ name }))
+          },
+          fileDescriptorResponse: undefined,
+          allExtensionNumbersResponse: undefined,
+          errorResponse: undefined
+        };
+        response$.next(this.grpcConfig.options.loader.keepCase ? objectToSnake(response) as any as ServerReflectionResponse : response);
+      }
 
       if (message.fileByFilename) {
         const protoFile = Object.values(this.index).find(({ name }) => name === message.fileByFilename);
