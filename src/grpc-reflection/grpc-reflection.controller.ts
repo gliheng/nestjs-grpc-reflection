@@ -17,6 +17,7 @@ interface ProtoFileData {
   path: string;
   name: string;
   services: string[];
+  symbols: string[];
 }
 
 type ProtoIndex = Record<string, ProtoFileData>;
@@ -54,10 +55,25 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
         return objName;
       }).filter(str => !!str);
 
+      const symbols = Object.entries(packageDefinition).map(([objName, obj]) => {
+        // Message Types
+        if (obj.format === 'Protocol Buffer 3 DescriptorProto') {
+          return obj.type['name'];
+        }
+
+        // Enum Types
+        if (obj.format === 'Protocol Buffer 3 EnumDescriptorProto') {
+          return obj.type['name'];
+        }
+
+        return objName;
+      }).filter(str => !!str);
+
       return [path.basename(file), {
         path: file,
         name: path.basename(file),
-        services
+        services,
+        symbols
       }];
     })));
 
@@ -88,6 +104,36 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
           errorResponse: undefined
         };
         response$.next(this.grpcConfig.options.loader.keepCase ? objectToSnake(response) as any as ServerReflectionResponse : response);
+      }
+
+      if (message.fileContainingSymbol) {
+        const protoFile = Object.values(this.index).find(({ symbols }) => symbols.includes(message.fileContainingSymbol));
+        if (protoFile) {
+          const response = {
+            validHost: message.host,
+            originalRequest: message,
+            fileDescriptorResponse: {
+              fileDescriptorProto: [fs.readFileSync(protoFile.path)]
+            },
+            allExtensionNumbersResponse: undefined,
+            listServicesResponse: undefined,
+            errorResponse: undefined
+          };
+          response$.next(this.grpcConfig.options.loader.keepCase ? objectToSnake(response) as any as ServerReflectionResponse : response);
+        } else {
+          const response = {
+            validHost: message.host,
+            originalRequest: message,
+            fileDescriptorResponse: undefined,
+            allExtensionNumbersResponse: undefined,
+            listServicesResponse: undefined,
+            errorResponse: {
+              errorCode: grpc.status.NOT_FOUND,
+              errorMessage: `Proto file not found: ${message.fileByFilename}`
+            }
+          };
+          response$.next(this.grpcConfig.options.loader.keepCase ? objectToSnake(response) as any as ServerReflectionResponse : response);
+        }
       }
 
       if (message.fileByFilename) {
