@@ -1,6 +1,8 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { GrpcOptions } from '@nestjs/microservices';
-import { GrpcReflectionController, GRPC_CONFIG_PROVIDER_TOKEN } from './grpc-reflection.controller';
+import { GrpcReflectionController } from './grpc-reflection.controller';
+import { GRPC_CONFIG_PROVIDER_TOKEN } from './grpc-reflection.constants';
+import { GrpcReflectionService } from './grpc-reflection.service';
 
 @Module({})
 export class GrpcReflectionModule {
@@ -8,10 +10,13 @@ export class GrpcReflectionModule {
     return {
       module: GrpcReflectionModule,
       controllers: [GrpcReflectionController],
-      providers: [{
-        provide: GRPC_CONFIG_PROVIDER_TOKEN,
-        useValue: grpcOptions
-      }]
+      providers: [
+        GrpcReflectionService,
+        {
+          provide: GRPC_CONFIG_PROVIDER_TOKEN,
+          useValue: grpcOptions
+        }
+      ]
     };
   }
 }
