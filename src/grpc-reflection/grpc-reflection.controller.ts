@@ -1,11 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Observable, Subject } from 'rxjs';
+import { objectToCamel, objectToSnake } from 'ts-case-convert';
 
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { Controller, Inject, OnModuleInit } from '@nestjs/common';
-import { GrpcOptions } from '@nestjs/microservices';
+import { GrpcMethod, GrpcOptions } from '@nestjs/microservices';
 
 import { REFLECTION_PROTO } from './grpc-reflection.constants';
 import { protobufPackage, ServerReflectionController, ServerReflectionControllerMethods, ServerReflectionRequest, ServerReflectionResponse } from './proto/grpc/reflection/v1alpha/reflection';
@@ -67,11 +68,17 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
     const response$ = new Subject<ServerReflectionResponse>();
 
     const onComplete = () => response$.complete();
-    const onNext = (message: ServerReflectionRequest): void => {
+    const onNext = (rawMsg: ServerReflectionRequest): void => {
+
+      /* Convert the message keys from snake_case to camelCase to deal with proto-loader's "keepCase" option. This is
+       * necessary because this module will be loaded into someone else's gRPC environment which we don't have control
+       * over. If they've set keepCase to 'true' then we should convert it anyways for ourselves for consistency. */
+      const message = this.grpcConfig.options.loader.keepCase ? objectToCamel(rawMsg) : rawMsg;
+
       if (message.fileByFilename) {
         const protoFile = Object.values(this.index).find(({ name }) => name === message.fileByFilename);
         if (protoFile) {
-          response$.next({
+          const response = {
             validHost: message.host,
             originalRequest: message,
             fileDescriptorResponse: {
@@ -80,10 +87,11 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
             allExtensionNumbersResponse: undefined,
             listServicesResponse: undefined,
             errorResponse: undefined
-          });
+          };
+          response$.next(this.grpcConfig.options.loader.keepCase ? objectToSnake(response) as any as ServerReflectionResponse : response);
         }
         else {
-          response$.next({
+          const response = {
             validHost: message.host,
             originalRequest: message,
             fileDescriptorResponse: undefined,
@@ -93,7 +101,8 @@ export class GrpcReflectionController implements OnModuleInit, ServerReflectionC
               errorCode: grpc.status.NOT_FOUND,
               errorMessage: `Proto file not found: ${message.fileByFilename}`
             }
-          });
+          };
+          response$.next(this.grpcConfig.options.loader.keepCase ? objectToSnake(response) as any as ServerReflectionResponse : response);
         }
       }
     };
