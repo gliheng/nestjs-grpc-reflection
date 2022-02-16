@@ -7,6 +7,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import { Controller, Inject, OnModuleInit } from '@nestjs/common';
 import { GrpcOptions } from '@nestjs/microservices';
 
+import { REFLECTION_PROTO } from './grpc-reflection.constants';
 import { protobufPackage, ServerReflectionController, ServerReflectionControllerMethods, ServerReflectionRequest, ServerReflectionResponse } from './proto/grpc/reflection/v1alpha/reflection';
 
 export const GRPC_CONFIG_PROVIDER_TOKEN = 'GRPC_CONFIG_OPTIONS';
