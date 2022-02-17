@@ -1,12 +1,11 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { FileDescriptorProto, FileDescriptorSet } from 'google-protobuf/google/protobuf/descriptor_pb'
 
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { GrpcOptions } from '@nestjs/microservices';
 
-import { GRPC_CONFIG_PROVIDER_TOKEN, REFLECTION_PROTO } from './grpc-reflection.constants';
+import { GRPC_CONFIG_PROVIDER_TOKEN } from './grpc-reflection.constants';
 import { FileDescriptorResponse, ListServiceResponse } from './proto/grpc/reflection/v1alpha/reflection';
 
 export class ReflectionError extends Error {
@@ -15,19 +14,10 @@ export class ReflectionError extends Error {
   }
 }
 
-interface ProtoFileData {
-  path: string;
-  name: string;
-  services: string[];
-  symbols: string[];
-}
-
-type ProtoIndex = Record<string, ProtoFileData>;
-
 @Injectable()
 export class GrpcReflectionService implements OnModuleInit {
 
-  private index: ProtoIndex = {};
+  private fileDescriptorSet = new FileDescriptorSet();
 
   constructor(@Inject(GRPC_CONFIG_PROVIDER_TOKEN) private readonly grpcConfig: GrpcOptions) {}
 
@@ -35,68 +25,61 @@ export class GrpcReflectionService implements OnModuleInit {
     const { protoPath, loader } = this.grpcConfig.options;
     const protoFiles = Array.isArray(protoPath) ? protoPath : [protoPath];
 
-    this.index = Object.fromEntries(protoFiles.filter(f => f != REFLECTION_PROTO).map((file => {
+    // Build a FileDescriptorSet from all the files
+    protoFiles.forEach(file => {
       const packageDefinition = protoLoader.loadSync(file, loader);
-
-      const services = Object.entries(packageDefinition).map(([objName, obj]) => {
-        // Message Types
-        if (obj.format === 'Protocol Buffer 3 DescriptorProto') {
-          return null; // obj.type.name
+      Object.values(packageDefinition).forEach(({ fileDescriptorProtos }) => {
+        // Add file descriptors to the FileDescriptorSet.
+        // We use the Array check here because a ServiceDefinition could have a method named the same thing
+        if (Array.isArray(fileDescriptorProtos)) {
+          fileDescriptorProtos.forEach(bin => {
+            const proto = FileDescriptorProto.deserializeBinary(bin);
+            const isFileInSet = this.fileDescriptorSet.getFileList().map(f => f.getName()).includes(proto.getName());
+            if (!isFileInSet) {
+              this.fileDescriptorSet.addFile(proto);
+            }
+          });
         }
-
-        // Enum Types
-        if (obj.format === 'Protocol Buffer 3 EnumDescriptorProto') {
-          return null;
-        }
-
-        return objName;
-      }).filter(str => !!str);
-
-      const symbols = Object.entries(packageDefinition).map(([objName, obj]) => {
-        // Message Types
-        if (obj.format === 'Protocol Buffer 3 DescriptorProto') {
-          return obj.type['name'];
-        }
-
-        // Enum Types
-        if (obj.format === 'Protocol Buffer 3 EnumDescriptorProto') {
-          return obj.type['name'];
-        }
-
-        return objName;
-      }).filter(str => !!str);
-
-      return [path.basename(file), {
-        path: file,
-        name: path.basename(file),
-        services,
-        symbols
-      }];
-    })));
-
-    console.log(this.index);
+      })
+    });
   }
 
   listServices(_listServices: string): ListServiceResponse {
-    const services = Object.values(this.index).map(({ services }) => services).flat();
-    return { service: services.map(name => ({ name })) };
+    const services = this.fileDescriptorSet
+      .getFileList()
+      .map(file => file.getServiceList().map(service => `${file.getPackage()}.${service.getName()}`))
+      .flat();
+
+    return { service: services.map(service => ({ name: service })) };
   }
 
   fileContainingSymbol(symbol: string): FileDescriptorResponse {
-    const protoFile = Object.values(this.index).find(({ symbols }) => symbols.includes(symbol));
-    if (!protoFile) {
+    const filesWithSymbol = this.fileDescriptorSet
+      .getFileList()
+      .filter(file => {
+        const symbols = [
+          ...file.getServiceList(),
+          ...file.getMessageTypeList(),
+          ...file.getEnumTypeList()
+        ].map(symbol => `${file.getPackage()}.${symbol.getName()}`);
+
+        return symbols.includes(symbol);
+      });
+
+    if (!filesWithSymbol) {
       throw new ReflectionError(grpc.status.NOT_FOUND, `Symbol not found: ${symbol}`);
     }
-    return { fileDescriptorProto: [fs.readFileSync(protoFile.path)] };
+
+    return { fileDescriptorProto: filesWithSymbol.map(f => f.serializeBinary()) };
   }
 
   fileByFilename(filename: string): FileDescriptorResponse {
-    const protoFile = Object.values(this.index).find(({ name }) => name === filename);
+    const fileDescriptorProtos = this.fileDescriptorSet.getFileList().filter(file => file.getName() === filename);
 
-    if (!protoFile) {
+    if (fileDescriptorProtos.length === 0) {
       throw new ReflectionError(grpc.status.NOT_FOUND, `Proto file not found: ${filename}`);
     }
 
-    return { fileDescriptorProto: [fs.readFileSync(protoFile.path)] };
+    return { fileDescriptorProto: fileDescriptorProtos.map(f => f.serializeBinary()) };
   }
 }
