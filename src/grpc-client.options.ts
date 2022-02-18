@@ -11,7 +11,10 @@ export const grpcClientOptions: GrpcOptions = {
       REFLECTION_PROTO
     ],
     loader: {
-      oneofs: true
+      oneofs: true,
+      includeDirs: [
+        join(__dirname, 'sample/proto/vendor/')
+      ]
     }
   },
 };
