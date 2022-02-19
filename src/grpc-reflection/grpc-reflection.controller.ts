@@ -88,11 +88,27 @@ export class GrpcReflectionController implements ServerReflectionController {
       }
 
       /** Similar to above, we need to handle 'keepCase' as part of the server response as well */
-      response$.next(
-        this.grpcConfig.options.loader?.keepCase
-          ? (objectToSnake(response) as any as ServerReflectionResponse)
-          : response,
-      );
+      if (this.grpcConfig.options.loader?.keepCase) {
+        const convertedResponse = objectToSnake(response);
+        const fixedConvertedResponse = {
+          ...convertedResponse,
+
+          // the "snake case conversion process" mangles our file descriptors, so if we're including that then we need
+          // to pull that back from the original response object
+          file_descriptor_response: convertedResponse.file_descriptor_response
+            ? {
+                ...convertedResponse.file_descriptor_response,
+                file_descriptor_proto:
+                  response.fileDescriptorResponse.fileDescriptorProto,
+              }
+            : convertedResponse.file_descriptor_response,
+        };
+        response$.next(
+          fixedConvertedResponse as any as ServerReflectionResponse,
+        ); // coerce back to "correct" type
+      } else {
+        response$.next(response); // send as-is, no need to convert
+      }
     };
 
     request$.subscribe({
