@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.2](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/compare/v0.0.1...v0.0.2) (2022-02-19)
+
+
+### Features
+
+* add files to export from library ([da8c323](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/commit/da8c323a393fdfad9cc944d911500298ab63c672))
+
 ### 0.0.1 (2022-02-19)
 
 
