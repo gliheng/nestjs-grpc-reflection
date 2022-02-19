@@ -2,9 +2,13 @@
   "name": "nestjs-grpc-reflection",
   "version": "0.0.1",
   "description": "",
-  "author": "",
-  "private": true,
+  "author": "Justin Timmons",
+  "private": false,
   "license": "UNLICENSED",
+  "files": [
+    "dist/index.*",
+    "dist/grpc-reflection/"
+  ],
   "scripts": {
     "prebuild": "rimraf dist",
     "generate": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt=nestJs=true ./src/grpc-reflection/proto/grpc/reflection/v1alpha/reflection.proto --ts_proto_out=.",
