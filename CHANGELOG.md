@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.3](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/compare/v0.0.2...v0.0.3) (2022-02-19)
+
+
+### Bug Fixes
+
+* added package 'main' file ([e1738f3](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/commit/e1738f3a706887007c8ded139a7a838b5a152f10))
+* handle case where grpc proto-loader options aren't set ([7909c7d](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/commit/7909c7d0dee6fc9d916f539e37ce42995d78d2a3))
+
 ### [0.0.2](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/compare/v0.0.1...v0.0.2) (2022-02-19)
 
 
