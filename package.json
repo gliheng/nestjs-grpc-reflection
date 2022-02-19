@@ -8,6 +8,7 @@
     "dist/index.*",
     "dist/grpc-reflection/"
   ],
+  "types": "dist/index.d.ts",
   "scripts": {
     "prebuild": "rimraf dist",
     "generate": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt=nestJs=true ./src/grpc-reflection/proto/grpc/reflection/v1alpha/reflection.proto --ts_proto_out=.",
