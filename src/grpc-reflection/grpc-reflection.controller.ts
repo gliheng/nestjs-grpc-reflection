@@ -41,7 +41,7 @@ export class GrpcReflectionController implements ServerReflectionController {
       /* Convert the message keys from snake_case to camelCase to deal with proto-loader's "keepCase" option. This is
        * necessary because this module will be loaded into someone else's gRPC environment which we don't have control
        * over. If they've set keepCase to 'true' then we should convert it anyways for ourselves for consistency. */
-      const message = this.grpcConfig.options.loader.keepCase
+      const message = this.grpcConfig.options.loader?.keepCase
         ? objectToCamel(rawMsg)
         : rawMsg;
 
@@ -89,7 +89,7 @@ export class GrpcReflectionController implements ServerReflectionController {
 
       /** Similar to above, we need to handle 'keepCase' as part of the server response as well */
       response$.next(
-        this.grpcConfig.options.loader.keepCase
+        this.grpcConfig.options.loader?.keepCase
           ? (objectToSnake(response) as any as ServerReflectionResponse)
           : response,
       );
