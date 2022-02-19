@@ -1,6 +1,6 @@
 {
   "name": "nestjs-grpc-reflection",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A pluggable gRPC Reflection Server for the NestJS framework",
   "author": "Justin Timmons",
   "repository": "gitlab:jtimmons/nestjs-grpc-reflection-module",
