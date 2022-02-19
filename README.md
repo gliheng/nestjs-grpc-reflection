@@ -2,14 +2,20 @@
 
 A pluggable [gRPC Reflection Server](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) for the excellent [NestJS](https://github.com/nestjs/nest) framework.
 
-Adding this to your existing gRPC microservice will allow gRPC clients [such as postman](https://blog.postman.com/postman-now-supports-grpc/) to dynamically load your API definitions from your running application rather than needing to load each proto file manually.
+Adding this module to your existing NestJS-based gRPC microservice will allow clients [such as postman](https://blog.postman.com/postman-now-supports-grpc/) to dynamically load your API definitions from your running application rather than needing to load each proto file manually.
 
 ## Getting Started
 
-The gRPC Reflection Server module runs within your application's existing gRPC server just as any other controller in your microservice. To get started, simply register the `GrpcReflectionModule` from the root module of your application - it takes in the same `GrpcOptions` that are used to create your microservice:
+To get started, first install the package:
+
+```bash
+$ npm install nestjs-grpc-reflection
+```
+
+Then simply register the `GrpcReflectionModule` from the root module of your application - it takes in the same `GrpcOptions` that are used to create your microservice. The gRPC Reflection Server module runs within your application's existing gRPC server just as any other controller in your microservice, so loading the module will add the appropriate routes to your application.
 
 ```ts
-import { GrpcReflectionModule } from '../grpc-reflection/grpc-reflection.module';
+import { GrpcReflectionModule } from 'nestjs-grpc-reflection';
 ...
 @Module({
   imports: [GrpcReflectionModule.register(grpcClientOptions)],
@@ -18,13 +24,11 @@ import { GrpcReflectionModule } from '../grpc-reflection/grpc-reflection.module'
 export class AppModule {}
 ```
 
-Additionally, NestJS must know where the reflection proto files are so that it can serialize/deserialize its message traffic. For convenience these paths are exposed in the `REFLECTION_PACKAGE` and `REFLECTION_PROTO` constants: these should be added to your `GrpcOptions` config in the `package` and `protoPath` lists.
+Finally, NestJS needs to know where the reflection proto files are so that it can serialize/deserialize its message traffic. For convenience these paths are exposed in the `REFLECTION_PACKAGE` and `REFLECTION_PROTO` constants; these should be added to your `GrpcOptions` config in the `package` and `protoPath` lists.
 
 ```ts
-import { join } from 'path';
-import { GrpcOptions, Transport } from '@nestjs/microservices';
-import { REFLECTION_PACKAGE, REFLECTION_PROTO } from './grpc-reflection/grpc-reflection.constants';
-
+import { REFLECTION_PACKAGE, REFLECTION_PROTO } from 'nestjs-grpc-reflection';
+...
 export const grpcClientOptions: GrpcOptions = {
   transport: Transport.GRPC,
   options: {
@@ -36,6 +40,8 @@ export const grpcClientOptions: GrpcOptions = {
   },
 };
 ```
+
+> :warning: **If you are using [@grpc/proto-loader's `keepCase` option](https://github.com/grpc/grpc-node/blob/master/packages/proto-loader/README.md) you may experience some issues with the server reflection API**. This module assumes that the microservice server is running with `keepCase` off (the NestJS default) and will attempt to convert *back* to the original case if it's on but this may not be perfect in all cases.
 
 ## Local Development
 
