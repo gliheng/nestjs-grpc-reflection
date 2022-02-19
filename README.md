@@ -1,38 +1,59 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+A pluggable [gRPC Reflection Server](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) for the excellent [NestJS](https://github.com/nestjs/nest) framework.
 
-## Installation
+Adding this to your existing gRPC microservice will allow gRPC clients [such as postman](https://blog.postman.com/postman-now-supports-grpc/) to dynamically load your API definitions from your running application rather than needing to load each proto file manually.
+
+## Getting Started
+
+The gRPC Reflection Server module runs within your application's existing gRPC server just as any other controller in your microservice. To get started, simply register the `GrpcReflectionModule` from the root module of your application - it takes in the same `GrpcOptions` that are used to create your microservice:
+
+```ts
+import { GrpcReflectionModule } from '../grpc-reflection/grpc-reflection.module';
+...
+@Module({
+  imports: [GrpcReflectionModule.register(grpcClientOptions)],
+  ...
+})
+export class AppModule {}
+```
+
+Additionally, NestJS must know where the reflection proto files are so that it can serialize/deserialize its message traffic. For convenience these paths are exposed in the `REFLECTION_PACKAGE` and `REFLECTION_PROTO` constants: these should be added to your `GrpcOptions` config in the `package` and `protoPath` lists.
+
+```ts
+import { join } from 'path';
+import { GrpcOptions, Transport } from '@nestjs/microservices';
+import { REFLECTION_PACKAGE, REFLECTION_PROTO } from './grpc-reflection/grpc-reflection.constants';
+
+export const grpcClientOptions: GrpcOptions = {
+  transport: Transport.GRPC,
+  options: {
+    package: ['sample', REFLECTION_PACKAGE],
+    protoPath: [
+      join(__dirname, 'sample/proto/sample.proto'),
+      REFLECTION_PROTO
+    ]
+  },
+};
+```
+
+## Local Development
+
+This repository contains a simple example gRPC service as well as the gRPC reflection module library, so new features can be tested against that service.
 
 ```bash
 $ npm install
 ```
 
-## Running the app
+### Generating Types
+
+This repo uses [ts-proto](https://github.com/stephenh/ts-proto/blob/main/NESTJS.markdown) for type generation. If any of the the reflection API proto files are changed, we'll need to regenerate the types to reflect that change. This relies on the `protoc` compiler, so if that's not installed already you'll need to do so first - instructions can be found on their site [here](https://grpc.io/docs/protoc-installation/).
+
+```bash
+$ npm run generate # regenerate reflection types, requires 'protoc' to be installed
+```
+
+### Running the app
 
 ```bash
 # development
@@ -45,7 +66,7 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-## Test
+### Test
 
 ```bash
 # unit tests
@@ -57,17 +78,3 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
