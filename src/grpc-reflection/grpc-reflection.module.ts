@@ -14,9 +14,9 @@ export class GrpcReflectionModule {
         GrpcReflectionService,
         {
           provide: GRPC_CONFIG_PROVIDER_TOKEN,
-          useValue: grpcOptions
-        }
-      ]
+          useValue: grpcOptions,
+        },
+      ],
     };
   }
 }
