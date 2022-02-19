@@ -1,10 +1,9 @@
 {
   "name": "nestjs-grpc-reflection",
   "version": "0.0.1",
-  "description": "",
+  "description": "A pluggable gRPC Reflection Server for the NestJS framework",
   "author": "Justin Timmons",
-  "private": false,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "files": [
     "dist/index.*",
     "dist/grpc-reflection/"
