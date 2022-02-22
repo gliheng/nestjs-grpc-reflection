@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.6](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/compare/v0.0.5...v0.0.6) (2022-02-22)
+
+
+### Features
+
+* added function to add proto paths/package to grpc options ([7b42c8d](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/commit/7b42c8db8e5dd3da9e13863d43ca5f2ceea93604))
+
 ### [0.0.5](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/compare/v0.0.4...v0.0.5) (2022-02-19)
 
 
