@@ -24,22 +24,21 @@ import { GrpcReflectionModule } from 'nestjs-grpc-reflection';
 export class AppModule {}
 ```
 
-Finally, NestJS needs to know where the reflection proto files are so that it can serialize/deserialize its message traffic. For convenience these paths are exposed in the `REFLECTION_PACKAGE` and `REFLECTION_PROTO` constants; these should be added to your `GrpcOptions` config in the `package` and `protoPath` lists.
+Finally, NestJS needs to know where the reflection proto files are so that it can serialize/deserialize its message traffic. For convenience, this can be automatically added to your `GrpcOptions` using the `addReflectionToGrpcConfig` function like so:
 
 ```ts
-import { REFLECTION_PACKAGE, REFLECTION_PROTO } from 'nestjs-grpc-reflection';
+import { addReflectionToGrpcConfig } from 'nestjs-grpc-reflection';
 ...
-export const grpcClientOptions: GrpcOptions = {
+export const grpcClientOptions: GrpcOptions = addReflectionToGrpcConfig({
   transport: Transport.GRPC,
   options: {
-    package: ['sample', REFLECTION_PACKAGE],
-    protoPath: [
-      join(__dirname, 'sample/proto/sample.proto'),
-      REFLECTION_PROTO
-    ]
+    package: 'sample',
+    protoPath: join(__dirname, 'sample/proto/sample.proto'),
   },
-};
+});
 ```
+
+Alternatively, these paths can be added manually by appending the `REFLECTION_PACKAGE` and `REFLECTION_PROTO` constants to the `package` and `protoPath` lists respectively.
 
 > :warning: **If you are using [@grpc/proto-loader's `keepCase` option](https://github.com/grpc/grpc-node/blob/master/packages/proto-loader/README.md) you may experience some issues with the server reflection API**. This module assumes that the microservice server is running with `keepCase` off (the NestJS default) and will attempt to convert *back* to the original case if it's on but this may not be perfect in all cases.
 
