@@ -4,7 +4,7 @@ A pluggable [gRPC Reflection Server](https://github.com/grpc/grpc/blob/master/do
 
 Adding this module to your existing NestJS-based gRPC microservice will allow clients [such as postman](https://blog.postman.com/postman-now-supports-grpc/) to dynamically load your API definitions from your running application rather than needing to load each proto file manually.
 
-![example of reflection working with postman](./images/example.gif)
+![example of reflection working with postman](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/-/raw/master/images/example.gif)
 
 ## Getting Started
 
