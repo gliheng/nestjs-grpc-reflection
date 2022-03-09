@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.9](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/compare/v0.0.8...v0.0.9) (2022-03-09)
+
+
+### Bug Fixes
+
+* added raw link to gif to work on external sites like npm ([2868e7e](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/commit/2868e7e9b4ff9b9dac72e5442cdc8f0629f2bba7))
+
 ### [0.0.8](https://gitlab.com/jtimmons/nestjs-grpc-reflection-module/compare/v0.0.7...v0.0.8) (2022-03-09)
 
 
