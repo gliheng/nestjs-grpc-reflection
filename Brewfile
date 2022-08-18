@@ -1,0 +1,1 @@
+brew "bufbuild/buf/buf"
