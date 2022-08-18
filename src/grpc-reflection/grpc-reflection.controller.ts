@@ -104,7 +104,7 @@ export class GrpcReflectionController implements ServerReflectionController {
             : convertedResponse.file_descriptor_response,
         };
         response$.next(
-          fixedConvertedResponse as any as ServerReflectionResponse,
+          fixedConvertedResponse as unknown as ServerReflectionResponse,
         ); // coerce back to "correct" type
       } else {
         response$.next(response); // send as-is, no need to convert
